@@ -355,8 +355,10 @@ def main():
     args = get_args()
     with open(args.config) as f:
         config = json.load(f)
+    p = mp.Process(target=get_mnist, args=())
+    p.start()
+    p.join()
     save_path = get_save_path(args.config, 'nc-ff', 'configs', 'results')
-    get_mnist()
     config['save_path'] = save_path
     distribute(config)
 
