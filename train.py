@@ -173,37 +173,37 @@ def train(model, config, save_path):
             )
 
 
-def get_mnist():
+def get_mnist(train_bs, valid_bs):
     data_dir = os.path.join(get_repo_root('nc-ff'), 'datasets')
     train_ds = tfds.load(
         name="mnist:3.*.*",
         split="train[:80%]",
-        batch_size=17,
+        batch_size=train_bs,
         as_supervised=True,
         data_dir=data_dir
     )
     valid_ds = tfds.load(
         name="mnist:3.*.*",
         split="train[-20%:]",
-        batch_size=400,
+        batch_size=valid_bs,
         as_supervised=True,
         data_dir=data_dir
     )
     train_ds = train_ds.repeat().shuffle(1024)
-    print(type(train_ds))
     return {'train': train_ds, 'valid': valid_ds}
 
 
 def launch(config):
     ModelClass = getattr(nets, config['graph']['net'])
     model = ModelClass(config['graph'])
-    datasets = get_mnist()
+    datasets = get_mnist(config['train']['batch_size'], config['train']['valid']['batch_size'])
     model.build(datasets)
     train(model, config['train'], config['save_path'])
 
 
 def distribute(config):
     for i in range(config['num_repeats']):
+        print('\nLAUNCH #{}'.format(i))
         launch_config = copy.deepcopy(config)
         launch_config['save_path'] = os.path.join(
             launch_config['save_path'], str(i))

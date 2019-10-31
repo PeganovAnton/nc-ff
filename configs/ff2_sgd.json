@@ -8,11 +8,14 @@
     "shuffle": false
   },
   "train": {
-    "batch_size": 31,
+    "batch_size": 50,
     "num_steps": 100000,
     "lr_init": 0.001,
     "lr_step": 10000,
     "lr_decay": 0.5,
-    "log_factor": 1.05
+    "log_factor": 1.05,
+    "valid": {
+      "batch_size": 100
+    }
   }
 }

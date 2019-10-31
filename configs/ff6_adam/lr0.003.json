@@ -2,7 +2,7 @@
   "num_repeats": 10,
   "graph": {
     "net": "DenseNetwork",
-    "num_nodes": [800, 10],
+    "num_nodes": [2500, 2000, 1500, 1000, 500, 10],
     "optimizer": "adam",
     "init_parameter": 0.1,
     "shuffle": false
@@ -10,8 +10,8 @@
   "train": {
     "batch_size": 50,
     "num_steps": 100000,
-    "lr_init": 0.001,
-    "lr_step": 10000,
+    "lr_init": 0.003,
+    "lr_step": 25000,
     "lr_decay": 0.5,
     "log_factor": 1.05,
     "valid": {
