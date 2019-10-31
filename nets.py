@@ -186,7 +186,7 @@ class Conv2dNetwork(Network):
 def get_input_size(dataset):
     shapes = tf.data.get_output_shapes(dataset)
     shape = shapes[0].as_list()
-    return np.prod(shape)
+    return np.prod(shape[1:])
 
 
 def shuffle(tensor):
