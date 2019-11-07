@@ -156,30 +156,35 @@ class Conv2dNetwork(Network):
             list(self.datasets.values())[0]).as_list()
         for i, layer_specs in enumerate(self._config['layers']):
             layer_specs = copy.deepcopy(layer_specs)
+            layer_type = layer_specs["type"]
             LayerClass = get_layer_class(layer_specs)
-            del layer_specs['type']
+            layer_specs = prepare_layer_specs(
+                layer_specs,
+                self._init_parameter
+                / (input_shape[1] * input_shape[2] * input_shape[3]) ** 0.5
+            )
             layer = LayerClass(**layer_specs)
             hs = layer(hs)
-            tensor_name = 'hs{}_corr'.format(i)
-            self.fetches['tensors'][tensor_name] = tensor_ops.corcov_loss(
-                hs,
-                reduced_axes=[0],
-                cor_axis=3,
-                punish='correlation',
-                reduction='mean',
-                norm='sqr'
-            )
-            tensor_name = 'hs{}_rms'.format(i)
-            self.fetches['tensors'][tensor_name] = tf.sqrt(
-                tf.reduce_mean(tf.square(hs)))
-            self.layers.append(layer)
-            input_shape = get_conv_2d_out_shape(
-                input_shape,
-                layer_specs['filters'],
-                layer_specs['kernel_size'],
-                layer_specs['strides'],
-                layer_specs['padding']
-            )
+            if layer_type != 'flatten':
+                if layer_type == 'conv_2d' or 'max_pooling_2d':
+                    reduced_axes = [0, 1, 2]
+                elif layer_type == 'dense':
+                    reduced_axes = [0]
+                tensor_name = 'hs{}_corr'.format(i)
+                self.fetches['tensors'][tensor_name] = tensor_ops.corcov_loss(
+                    hs,
+                    reduced_axes=reduced_axes,
+                    cor_axis=3,
+                    punish='correlation',
+                    reduction='mean',
+                    norm='sqr'
+                )
+                tensor_name = 'hs{}_rms'.format(i)
+                self.fetches['tensors'][tensor_name] = tf.sqrt(
+                    tf.reduce_mean(tf.square(hs)))
+                self.layers.append(layer)
+                input_shape = hs.get_shape().as_list()
+            # input_shape = get_out_shape(input_shape, layer_type, layer_specs)
         return hs
 
 
@@ -195,9 +200,85 @@ def shuffle(tensor):
     return tf.transpose(tensor)
 
 
+def get_out_shape(input_shape, layer_type, layer_specs):
+    supported_layer_types = ['conv_2d', 'flatten', 'dense', 'max_pooling_2d']
+    if layer_type == 'conv_2d':
+        input_shape = get_conv_2d_out_shape(
+            input_shape,
+            layer_specs['filters'],
+            layer_specs['kernel_size'],
+            layer_specs['strides'],
+            layer_specs['padding']
+        )
+    elif layer_type == 'max_pooling_2d':
+        input_shape = get_max_pooling_2d_out_shape(
+            input_shape,
+            layer_specs['pool_size'],
+            layer_specs['strides'],
+            layer_specs['padding']
+        )
+    elif layer_type == 'flatten':
+        input_shape = [
+            input_shape[0],
+            input_shape[1] * input_shape[2] * input_shape[3]
+        ]
+    elif layer_type == 'dense':
+        input_shape = [input_shape[0], layer_specs['units']]
+    else:
+        raise ValueError(
+            "Provided layer type {} is not in list of supported "
+            "layer types {}".format(repr(layer_type), supported_layer_types)
+        )
+    return input_shape
+
+
+def get_max_pooling_2d_out_shape(input_shape, pool_size, strides, padding):
+    if len(input_shape) != 4:
+        raise ValueError(
+            "The input of 2D max pooling layer has to have 4 dimensions "
+            "whereas\n"
+            "input_shape == {}".format(input_shape))
+    if len(pool_size) != 2:
+        raise ValueError(
+            "The pool size of 2D max pooling layer has to have 2 "
+            "dimensions whereas\n"
+            "pool_size == {}".format(pool_size)
+        )
+    if len(strides) != 2:
+        raise ValueError(
+            "The strides of 2D max pooling layer has to have 2 "
+            "dimensions whereas\n"
+            "strides == {}".format(strides)
+        )
+    res = [input_shape[0]]
+    for inp, k, s in zip(input_shape[1:], pool_size, strides):
+        if padding == 'valid':
+            inp -= k - 1
+        res.append(inp // s)
+    res.append(input_shape[-1])
+    return res
+
+
 def get_conv_2d_out_shape(inp_shape, filters, kernel_size, strides, padding):
+    if len(inp_shape) != 4:
+        raise ValueError(
+            "The input of 2D convolutional layer has to have 4 dimensions "
+            "whereas\n"
+            "input_shape == {}".format(inp_shape))
+    if len(kernel_size) != 2:
+        raise ValueError(
+            "The kernel size of 2D convolutional layer has to have 2 "
+            "dimensions whereas\n"
+            "kernel_size == {}".format(kernel_size)
+        )
+    if len(strides) != 2:
+        raise ValueError(
+            "The strides of 2D convolutional layer has to have 2 "
+            "dimensions whereas\n"
+            "strides == {}".format(strides)
+        )
     res = [inp_shape[0]]
-    for inp, k, s in zip(inp_shape, kernel_size, strides):
+    for inp, k, s in zip(inp_shape[1:], kernel_size, strides):
         if padding == 'valid':
             inp -= k - 1
         res.append(inp // s)
@@ -206,16 +287,48 @@ def get_conv_2d_out_shape(inp_shape, filters, kernel_size, strides, padding):
 
 
 def get_layer_class(specs):
+    supported_layer_types = ['conv_2d', 'flatten', 'dense', 'max_pooling_2d']
     if specs['type'] == 'conv_2d':
         Class = tf.layers.Conv2d
     elif specs['type'] == 'flatten':
         Class = tf.layers.Flatten
     elif specs['type'] == 'dense':
         Class = tf.layers.Dense
+    elif specs['type'] == 'max_pooling_2d':
+        Class = tf.layers.MaxPooling2D
     else:
         raise ValueError(
-            "Only layer types 'conv_2d', 'flatten', "
-            "'dense' are supported\n"
-            "specs['type'] == {}".format(specs['type'])
+            "Provided layer type {} is not in list of \nsupported "
+            "layer types {}".format(repr(specs['type']), supported_layer_types)
         )
     return Class
+
+
+def prepare_layer_specs(specs, init_stddev):
+    supported_activations = ['relu']
+    supported_kernel_initializers = ['truncated_normal']
+    specs = copy.deepcopy(specs)
+    del specs['type']
+    if 'activation' in specs:
+        if specs['activation'] == 'relu':
+            specs['activation'] = tf.nn.relu
+        else:
+            raise ValueError(
+                "Provided activation {} is not in list of "
+                "\nsupported activations {}".format(
+                    repr(specs['activation']), supported_activations)
+            )
+    if 'kernel_initializer' in specs:
+        if specs['kernel_initializer'] == 'truncated_normal':
+            specs['kernel_initializer'] = tf.truncated_normal_initializer(
+                0,
+                init_stddev
+            )
+        else:
+            raise ValueError(
+                "Provided kernel initializer {} is not in list of\n"
+                "supported kernel initializers {}".format(
+                    repr(specs['kernel_initializer']),
+                    supported_kernel_initializers)
+            )
+    return specs

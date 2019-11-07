@@ -1,0 +1,71 @@
+{
+  "num_repeats": 10,
+  "graph": {
+    "net": "DenseNetwork",
+    "layers": [
+      {
+        "type": "conv_2d",
+        "filters": 4,
+        "kernel_size": [3, 3],
+        "strides": [1, 1],
+        "activation": "relu",
+        "kernel_initializer": "truncated_normal"
+      },
+      {
+        "type": "max_pooling_2d",
+        "pool_size": [3, 3],
+        "strides": [1, 1]
+      },
+      {
+        "type": "conv_2d",
+        "filters": 64,
+        "kernel_size": [3, 3],
+        "strides": [2, 2],
+        "activation": "relu",
+        "kernel_initializer": "truncated_normal",
+        "padding": "same"
+      },
+      {
+        "type": "max_pooling_2d",
+        "pool_size": [3, 3],
+        "strides": [1, 1],
+        "padding": "same",
+      },
+      {
+        "type": "conv_2d",
+        "filters": 256,
+        "kernel_size": [5, 5],
+        "strides": [2, 2],
+        "activation": "relu",
+        "kernel_initializer": "truncated_normal",
+        "padding": "same"
+      },
+      {
+        "type": "max_pooling_2d",
+        "pool_size": [3, 3],
+        "strides": [2, 2],
+        "padding": "same"
+      },
+      {"type": "flatten"},
+      {
+        "type": "dense",
+        "units": 10,
+        "activation": "relu"
+      }
+    ],
+    "optimizer": "adam",
+    "init_parameter": 0.1,
+    "shuffle": false
+  },
+  "train": {
+    "batch_size": 50,
+    "num_steps": 100000,
+    "lr_init": 0.001,
+    "lr_step": 100000,
+    "lr_decay": 0.5,
+    "log_factor": 1.05,
+    "valid": {
+      "batch_size": 100
+    }
+  }
+}
