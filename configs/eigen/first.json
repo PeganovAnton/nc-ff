@@ -1,0 +1,22 @@
+{
+  "num_repeats": 10,
+  "graph": {
+    "net": "DenseNetwork",
+    "num_nodes": [784, 784, 784, 10],
+    "optimizer": "adam",
+    "init_parameter": 1,
+    "shuffle": false,
+    "l2_reg_coef": 0.001
+  },
+  "train": {
+    "batch_size": 50,
+    "num_steps": 100000,
+    "lr_init": 0.0001,
+    "lr_step": 100000,
+    "lr_decay": 0.5,
+    "log_factor": 1.05,
+    "valid": {
+      "batch_size": 100
+    }
+  }
+}

@@ -6,6 +6,7 @@ import multiprocessing as mp
 import os
 import pickle
 
+import numpy as np
 import tensorflow.compat.v1 as tf
 import tensorflow_datasets as tfds
 
@@ -19,6 +20,22 @@ def get_args():
         help="Path to json file with config."
     )
     return parser.parse_args()
+
+
+def get_normal_real_initializer(n):
+    d = np.random.randn(n)
+    eigen_vectors_basis_m = np.diag(d)
+    eigen_vectors = np.random.normal(n, n)
+    norms = np.linalg.norm(eigen_vectors, axis=0, keepdims=True)
+    eigen_vectors /= norms
+    inv = np.linalg.inv(eigen_vectors)
+    matrix = inv @ eigen_vectors_basis_m @ eigen_vectors
+    return tf.initializers.Constant(matrix)
+
+
+def get_diag_initializer(n):
+    d = np.random.randn(n)
+    return tf.initializers.Constant(np.diag(d))
 
 
 def split_path_into_components(path):
@@ -115,15 +132,14 @@ def save_tensors(tensors, save_path):
 
 
 def test(sess, train_step, model, mode, save_path):
-
     sess.run(model.init_ops[mode])
     metrics = {}
-    tensors = {}
+    accumulators = {}
     while True:
         try:
             result = sess.run(model.fetches[mode])
             accumulate(metrics, result['metrics'])
-            accumulate(tensors, result['tensors'])
+            accumulate(accumulators, result['accumulators'])
         except tf.errors.OutOfRangeError:
             break
     metrics = average(metrics)
@@ -132,7 +148,7 @@ def test(sess, train_step, model, mode, save_path):
         metrics,
         os.path.join(save_path, 'results/valid')
     )
-    save_tensors(average(tensors), os.path.join(save_path, 'tensors'))
+    save_tensors(average(accumulators), os.path.join(save_path, 'tensors'))
     return metrics
 
 
@@ -151,6 +167,9 @@ def train(model, config, save_path):
         sess.run(model.init_ops['train'])
         for step in range(config['num_steps']+1):
             if step in log_steps:
+                tensors = sess.run(model.fetches['tensors'])
+                tensors = count_real_eigen_values_fraction(tensors)
+                save_tensors(tensors, os.path.join(save_path, 'tensors'))
                 valid_metrics = test(
                     sess, step, model, 'valid', save_path)
                 sess.run(model.init_ops['train'])
@@ -173,31 +192,57 @@ def train(model, config, save_path):
             )
 
 
-def get_mnist(train_bs, valid_bs):
+def get_mnist(train_bs, valid_bs, test_bs=10000):
+    split_percentage = 80
     data_dir = os.path.join(get_repo_root('nc-ff'), 'datasets')
-    train_ds = tfds.load(
+    train_ds, info = tfds.load(
         name="mnist:3.*.*",
-        split="train[:80%]",
+        split="train[:{}%]".format(split_percentage),
         batch_size=train_bs,
         as_supervised=True,
-        data_dir=data_dir
+        data_dir=data_dir,
+        with_info=True
     )
     valid_ds = tfds.load(
         name="mnist:3.*.*",
-        split="train[-20%:]",
+        split="train[-{}%:]".format(100 - split_percentage),
         batch_size=valid_bs,
         as_supervised=True,
         data_dir=data_dir
     )
+    test_ds = tfds.load(
+        name="mnist:3.*.*",
+        split="test",
+        batch_size=test_bs,
+        as_supervised=True,
+        data_dir=data_dir
+    )
+    splits = info.splits
+    frac = split_percentage / 100
+    sizes = {
+        'train': round(splits['train'].num_examples * frac),
+        'valid':
+            splits['train'].num_examples
+            - round(splits['train'].num_examples * frac),
+        'test': splits['test'].num_examples
+    }
+    train_ds = train_ds.map(
+        lambda inp, lbl: (tf.cast(inp, dtype=tf.int64), lbl))
+    valid_ds = valid_ds.map(
+        lambda inp, lbl: (tf.cast(inp, dtype=tf.int64), lbl))
+    test_ds = test_ds.map(
+        lambda inp, lbl: (tf.cast(inp, dtype=tf.int64), lbl))
     train_ds = train_ds.repeat().shuffle(1024)
-    return {'train': train_ds, 'valid': valid_ds}
+    return {'train': train_ds, 'valid': valid_ds, "test": test_ds}, sizes
 
 
 def launch(config):
     ModelClass = getattr(nets, config['graph']['net'])
     model = ModelClass(config['graph'])
-    datasets = get_mnist(config['train']['batch_size'], config['train']['valid']['batch_size'])
-    model.build(datasets)
+    datasets, sizes = get_mnist(
+        config['train']['batch_size'],
+        config['train']['valid']['batch_size'])
+    model.build(datasets, sizes)
     train(model, config['train'], config['save_path'])
 
 
@@ -216,12 +261,26 @@ def main():
     args = get_args()
     with open(args.config) as f:
         config = json.load(f)
-    p = mp.Process(target=get_mnist, args=())
-    p.start()
-    p.join()
+    # p = mp.Process(target=get_mnist, args=())
+    # p.start()
+    # p.join()
     save_path = get_save_path(args.config, 'nc-ff', 'configs', 'results')
     config['save_path'] = save_path
     distribute(config)
+
+
+def count_real_eigen_values_fraction(kernels):
+    for k in list(kernels.keys()):
+        v = kernels[k]
+        sh = v.shape
+        if sh[0] == sh[1]:
+            e, v = np.linalg.eig(v)
+            n = np.sum(np.iscomplex(e).astype(int))
+            d = v.shape[0]
+            kernels[k] = (d - n) / d
+        else:
+            del kernels[k]
+    return kernels
 
 
 if __name__ == '__main__':
