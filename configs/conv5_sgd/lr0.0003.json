@@ -65,7 +65,7 @@
   "train": {
     "batch_size": 50,
     "num_steps": 100000,
-    "lr_init": 0.00003,
+    "lr_init": 0.0003,
     "lr_step": 100000,
     "lr_decay": 0.5,
     "log_factor": 1.05,
