@@ -22,22 +22,6 @@ def get_args():
     return parser.parse_args()
 
 
-def get_normal_real_initializer(n):
-    d = np.random.randn(n)
-    eigen_vectors_basis_m = np.diag(d)
-    eigen_vectors = np.random.normal(n, n)
-    norms = np.linalg.norm(eigen_vectors, axis=0, keepdims=True)
-    eigen_vectors /= norms
-    inv = np.linalg.inv(eigen_vectors)
-    matrix = inv @ eigen_vectors_basis_m @ eigen_vectors
-    return tf.initializers.Constant(matrix)
-
-
-def get_diag_initializer(n):
-    d = np.random.randn(n)
-    return tf.initializers.Constant(np.diag(d))
-
-
 def split_path_into_components(path):
     result = []
     while path and path != '/':
@@ -269,18 +253,18 @@ def main():
     distribute(config)
 
 
-def count_real_eigen_values_fraction(kernels):
-    for k in list(kernels.keys()):
-        v = kernels[k]
+def count_real_eigen_values_fraction(tensors):
+    for k in list(filter(lambda x: x[:6] == 'kernel', tensors.keys())):
+        v = tensors[k]
         sh = v.shape
         if sh[0] == sh[1]:
             e, v = np.linalg.eig(v)
             n = np.sum(np.iscomplex(e).astype(int))
             d = v.shape[0]
-            kernels[k] = (d - n) / d
+            tensors[k] = (d - n) / d
         else:
-            del kernels[k]
-    return kernels
+            del tensors[k]
+    return tensors
 
 
 if __name__ == '__main__':

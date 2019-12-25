@@ -26,6 +26,22 @@ def calculate_ds_moments(ds, ds_size):
     return mean, var
 
 
+def get_normal_real_eigen_initializer(n):
+    d = np.random.randn(n)
+    eigen_vectors_basis_m = np.diag(d)
+    eigen_vectors = np.random.randn(n, n)
+    norms = np.linalg.norm(eigen_vectors, axis=0, keepdims=True)
+    eigen_vectors /= norms
+    inv = np.linalg.inv(eigen_vectors)
+    matrix = inv @ eigen_vectors_basis_m @ eigen_vectors / 60
+    return tf.initializers.constant(matrix)
+
+
+def get_diag_initializer(n):
+    d = np.random.randn(n)
+    return tf.initializers.constant(np.diag(d))
+
+
 class Network:
     def __init__(
             self,
@@ -233,6 +249,8 @@ class Conv2dNetwork(Network):
                 tensor_name = 'hs{}_rms'.format(i)
                 self.fetches['accumulators'][tensor_name] = tf.sqrt(
                     tf.reduce_mean(tf.square(hs)))
+                tensor_name = 'kernel{}'.format(i)
+                self.fetches['tensors'][tensor_name] = layer.kernel
             input_shape = hs.get_shape().as_list()
         return hs
 
@@ -272,7 +290,7 @@ def get_layer_class(specs):
 
 def prepare_layer_specs(specs, input_shape, init_parameter):
     supported_activations = ['relu', 'leaky_relu']
-    supported_kernel_initializers = ['truncated_normal']
+    supported_kernel_initializers = ['truncated_normal', 'real_eigen', 'diag']
     specs = copy.deepcopy(specs)
     del specs['type']
     if 'activation' in specs:
@@ -305,6 +323,13 @@ def prepare_layer_specs(specs, input_shape, init_parameter):
                 0,
                 init_parameter / (inp_dim + output_dim) ** 0.5
             )
+        elif specs['kernel_initializer'] == 'real_eigen':
+            specs['kernel_initializer'] = get_normal_real_eigen_initializer(
+                specs['units']
+            )
+        elif specs['kernel_initializer'] == 'diag':
+            specs['kernel_initializer'] = get_diag_initializer(
+                specs['units'])
         else:
             raise ValueError(
                 "Provided kernel initializer {} is not in list of\n"
