@@ -99,7 +99,8 @@ class Network:
             logits=logits,
             labels=labels
         )
-        loss = tf.reduce_mean(cr_entr) + self.get_l2_loss()
+        ce_loss = tf.reduce_mean(cr_entr)
+        loss = ce_loss + self.get_l2_loss()
         acc = tf.reduce_mean(
             tf.cast(
                 tf.equal(
@@ -109,6 +110,7 @@ class Network:
                 dtype=tf.float32
             )
         )
+        self.fetches['metrics']['ce_loss'] = ce_loss
         self.fetches['metrics']['loss'] = loss
         self.fetches['metrics']['acc'] = acc
         self.fetches['preds'] = preds
