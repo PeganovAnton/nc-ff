@@ -110,3 +110,6 @@ results_of_tests/
 results_of_experiments/
 datasets/
 results/
+results
+
+nn_cf_result.tar.gz
