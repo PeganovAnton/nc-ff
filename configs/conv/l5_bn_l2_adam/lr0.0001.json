@@ -63,13 +63,25 @@
   },
   "train": {
     "batch_size": 50,
-    "num_steps": 100000,
+    "stop_patience_period": 5000,
+    "stop_patience": 20,
     "lr_init": 0.0001,
-    "lr_step": 100000,
     "lr_decay": 0.5,
+    "lr_patience_period": 5000,
+    "lr_patience": 10,
     "log_factor": 1.05,
     "valid": {
       "batch_size": 100
-    }
+    },
+    "tensors_and_accumulators_to_save": [
+      "hs0_corr",
+      "hs0_rms",
+      "hs3_corr",
+      "hs3_rms",
+      "hs6_corr",
+      "hs6_rms",
+      "hs9_corr",
+      "hs9_rms"
+    ]
   }
 }

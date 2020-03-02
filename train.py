@@ -107,15 +107,18 @@ def save_metrics(step, metrics, save_path):
                 f.write("{} {}\n".format(step, v))
 
 
-def save_tensors(tensors, save_path):
+def save_tensors(tensors, save_path, tensors_and_accumulators_to_save=None):
+    if tensors_and_accumulators_to_save is None:
+        tensors_and_accumulators_to_save = set()
     os.makedirs(save_path, exist_ok=True)
-    for k, v in tensors.items():
+    for k in set(tensors_and_accumulators_to_save) & set(tensors.keys()):
+        v = tensors[k]
         fn = os.path.join(save_path, k + '.pickle')
         with open(fn, 'ab') as f:
             pickle.dump(v, f)
 
 
-def test(sess, train_step, model, mode, save_path):
+def test(sess, train_step, model, mode, save_path, tensors_and_accumulators_to_save):
     sess.run(model.init_ops[mode])
     metrics = {}
     accumulators = {}
@@ -132,7 +135,11 @@ def test(sess, train_step, model, mode, save_path):
         metrics,
         os.path.join(save_path, 'results/valid')
     )
-    save_tensors(average(accumulators), os.path.join(save_path, 'tensors'))
+    save_tensors(
+        average(accumulators),
+        os.path.join(save_path, 'tensors'),
+        tensors_and_accumulators_to_save
+    )
     return metrics
 
 
@@ -237,9 +244,19 @@ def train(model, config, save_path):
                 tensors = sess.run(model.fetches['tensors'])
                 if 'eigen' in config:
                     tensors = count_real_eigen_values_fraction(tensors)
-                save_tensors(tensors, os.path.join(save_path, 'tensors'))
+                save_tensors(
+                    tensors,
+                    os.path.join(save_path, 'tensors'),
+                    config.get('tensors_and_accumulators_to_save')
+                )
                 valid_metrics = test(
-                    sess, step, model, 'valid', save_path)
+                    sess,
+                    step,
+                    model,
+                    'valid',
+                    save_path,
+                    config.get('tensors_and_accumulators_to_save')
+                )
                 sess.run(model.init_ops['train'])
                 if step > 0:
                     save_metrics(
