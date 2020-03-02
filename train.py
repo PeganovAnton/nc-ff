@@ -136,11 +136,84 @@ def test(sess, train_step, model, mode, save_path):
     return metrics
 
 
+def get_lr_decay_method(config):
+    if 'lr_step' in config:
+        method_of_lr_decay = 'periodic'
+    elif 'lr_patience' in config and 'lr_patience_period' in config:
+        method_of_lr_decay = 'impatience'
+    else:
+        raise ValueError(
+            "Train config has to contain either parameter 'lr_step' or "
+            "parameters 'lr_patience' and 'lr_patience_period'.\n"
+            "train config={}".format(config)
+        )
+    return method_of_lr_decay
+
+
+def update_lr(lr, step, res, best_ce_loss, lr_impatience, config):
+    method_of_lr_decay = get_lr_decay_method(config)
+    if method_of_lr_decay == 'periodic':
+        lr = config['lr_init'] \
+             * config['lr_decay'] ** (step // config["lr_step"])
+    elif method_of_lr_decay == 'impatience':
+        if step % config['lr_patience_period']:
+            if res['metrics']['ce_loss'] < best_ce_loss:
+                lr_impatience = 0
+            else:
+                lr_impatience += 1
+        if lr_impatience > config['lr_patience']:
+            lr *= config['lr_decay']
+    return lr, lr_impatience
+
+
+def get_training_interruption_method(config):
+    if 'num_steps' in config:
+        method_of_interrupting_training = 'fixed_num_steps'
+    elif 'stop_patience_period' in config and 'stop_patience' in config:
+        method_of_interrupting_training = 'impatience'
+    else:
+        raise ValueError(
+            "Train config has to contain either parameter 'fixed_num_steps'"
+            "or parameters 'stop_patience' and 'stop_patience_period'.\n"
+            "train config={}".format(config)
+        )
+    return method_of_interrupting_training
+
+
+def decide_if_training_is_finished(
+        step, res, best_ce_loss, stop_impatience, config):
+    method_of_interruption_of_training = get_training_interruption_method(config)
+    if method_of_interruption_of_training == 'fixed_num_steps':
+        stop_training = step > config['num_steps']
+    elif method_of_interruption_of_training == 'impatience':
+        if step % config['stop_patience_period']:
+            if res['metrics']['ce_loss'] < best_ce_loss:
+                stop_impatience = 0
+            else:
+                stop_impatience += 1
+        stop_training = stop_impatience > config['stop_patience']
+    else:
+        raise ValueError(
+            "Unsupported method of interrupting training '{}'".format(
+                method_of_interruption_of_training
+            )
+        )
+    return stop_training
+
+
+def time_for_logarithmic_logging(step, factor):
+    if step == 0:
+        return True
+    step_is_integer_power_of_factor = int(np.log(step+1) / np.log(factor)) \
+        - int(np.log(step) / np.log(factor)) > 0
+    return step_is_integer_power_of_factor
+
+
 def train(model, config, save_path):
     sess_config = tf.ConfigProto()
     sess_config.gpu_options.allow_growth = True
-    log_steps = logarithmic_int_range(
-        0, config['num_steps'], config['log_factor'], True)
+    # log_steps = logarithmic_int_range(
+    #     0, config['num_steps'], config['log_factor'], True)
     with tf.Session(config=sess_config) as sess:
         sess.run(
             [
@@ -149,10 +222,21 @@ def train(model, config, save_path):
             ]
         )
         sess.run(model.init_ops['train'])
-        for step in range(config['num_steps']+1):
-            if step in log_steps:
+
+        step = 0
+        lr = config['lr_init']
+
+        stop_impatience = 0
+        # `lr_impatience` is not used if 'lr_step' is in `config`.
+        lr_impatience = 0
+        best_ce_loss = float('+inf')
+
+        while True:
+            if time_for_logarithmic_logging(
+                    step, config['log_factor']):
                 tensors = sess.run(model.fetches['tensors'])
-                tensors = count_real_eigen_values_fraction(tensors)
+                if 'eigen' in config:
+                    tensors = count_real_eigen_values_fraction(tensors)
                 save_tensors(tensors, os.path.join(save_path, 'tensors'))
                 valid_metrics = test(
                     sess, step, model, 'valid', save_path)
@@ -168,12 +252,23 @@ def train(model, config, save_path):
                     res['metrics'] if step > 0 else None,
                     valid_metrics
                 )
-            lr = config['lr_init'] \
-                * config['lr_decay'] ** (step // config["lr_step"])
+
             res = sess.run(
                 model.fetches['train'],
                 feed_dict={model.feed_dict['lr']: lr}
             )
+            step += 1
+
+            lr, lr_impatience = update_lr(
+                lr, step, res, best_ce_loss, lr_impatience, config)
+
+            stop_training = decide_if_training_is_finished(
+                step, res, best_ce_loss, stop_impatience, config)
+            if stop_training:
+                break
+
+            if res['metrics']['ce_loss'] < best_ce_loss:
+                best_ce_loss = res['metrics']['ce_loss']
 
 
 def get_mnist(train_bs, valid_bs, test_bs=10000):

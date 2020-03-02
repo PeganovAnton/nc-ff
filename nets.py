@@ -233,7 +233,7 @@ class Conv2dNetwork(Network):
                     raise ValueError(
                         "Unsupported layer type {}\n"
                         "Supported layer types for "
-                        "correlation computation: {}".format(
+                        "correlation computation are: {}".format(
                             layer_type,
                             ['dense', 'conv_2d', 'max_pooling_2d']
                         )
@@ -251,8 +251,9 @@ class Conv2dNetwork(Network):
                 tensor_name = 'hs{}_rms'.format(i)
                 self.fetches['accumulators'][tensor_name] = tf.sqrt(
                     tf.reduce_mean(tf.square(hs)))
-                tensor_name = 'kernel{}'.format(i)
-                self.fetches['tensors'][tensor_name] = layer.kernel
+                if hasattr(layer, 'kernel'):
+                    tensor_name = 'kernel{}'.format(i)
+                    self.fetches['tensors'][tensor_name] = layer.kernel
             input_shape = hs.get_shape().as_list()
         return hs
 

@@ -53,11 +53,10 @@
       },
       {
         "type": "dense",
-        "units": 10,
-        "activation": "leaky_relu"
+        "units": 10
       }
     ],
-    "optimizer": "adam",
+    "optimizer": "sgd",
     "init_parameter": 1,
     "l2_reg_coef": 0.03,
     "shuffle": false
@@ -66,7 +65,7 @@
     "batch_size": 50,
     "stop_patience_period": 5000,
     "stop_patience": 20,
-    "lr_init": 0.0001,
+    "lr_init": 0.0003,
     "lr_decay": 0.5,
     "lr_patience_period": 5000,
     "lr_patience": 10,

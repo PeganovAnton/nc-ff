@@ -43,6 +43,7 @@
     "log_factor": 1.05,
     "valid": {
       "batch_size": 100
-    }
+    },
+    "eigen": true
   }
 }
