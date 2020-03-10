@@ -176,8 +176,9 @@ def update_lr(lr, step, res, best_ce_loss, lr_impatience, config):
                 lr_impatience = 0
             else:
                 lr_impatience += 1
-        if lr_impatience > config['lr_patience']:
-            lr *= config['lr_decay']
+                if lr_impatience > config['lr_patience']:
+                    lr *= config['lr_decay']
+                    lr_impatience = 0
     return lr, lr_impatience
 
 
