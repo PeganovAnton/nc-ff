@@ -198,7 +198,8 @@ def get_training_interruption_method(config):
 
 def decide_if_training_is_finished(
         step, res, best_ce_loss, stop_impatience, config):
-    method_of_interruption_of_training = get_training_interruption_method(config)
+    method_of_interruption_of_training = get_training_interruption_method(
+        config)
     if method_of_interruption_of_training == 'fixed_num_steps':
         stop_training = step > config['num_steps']
     elif method_of_interruption_of_training == 'impatience':
