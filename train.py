@@ -72,10 +72,10 @@ def logarithmic_int_range(start, stop, factor, include_stop=False):
     return steps
 
 
-def log(step, tr_metrics, vd_metrics):
-    tmpl = "{time} STEP: {step} {valid}"
+def log(step, tr_metrics, vd_metrics, lr):
+    tmpl = "{time} STEP: {step} || learning rate: {lr} || {valid}"
     msg = tmpl.format(
-        time=datetime.datetime.now(), step=step, valid=vd_metrics)
+        time=datetime.datetime.now(), step=step, valid=vd_metrics, lr=lr)
     print(msg)
 
 
@@ -96,9 +96,16 @@ def average(accumulator):
     return mean
 
 
-def save_metrics(step, metrics, save_path):
+def save_metrics_and_params(step, metrics, params, save_path):
     os.makedirs(save_path, exist_ok=True)
     for k, v in metrics.items():
+        fn = os.path.join(save_path, k + '.txt')
+        with open(fn, 'a') as f:
+            if step is None:
+                f.write("{}\n".format(v))
+            else:
+                f.write("{} {}\n".format(step, v))
+    for k, v in params.items():
         fn = os.path.join(save_path, k + '.txt')
         with open(fn, 'a') as f:
             if step is None:
@@ -130,9 +137,10 @@ def test(sess, train_step, model, mode, save_path, tensors_and_accumulators_to_s
         except tf.errors.OutOfRangeError:
             break
     metrics = average(metrics)
-    save_metrics(
+    save_metrics_and_params(
         train_step,
         metrics,
+        {},
         os.path.join(save_path, 'results/valid')
     )
     save_tensors(
@@ -259,15 +267,17 @@ def train(model, config, save_path):
                 )
                 sess.run(model.init_ops['train'])
                 if step > 0:
-                    save_metrics(
+                    save_metrics_and_params(
                         step,
                         res['metrics'],
+                        {'lr': lr},
                         os.path.join(save_path, 'results/train')
                     )
                 log(
                     step,
                     res['metrics'] if step > 0 else None,
-                    valid_metrics
+                    valid_metrics,
+                    lr
                 )
 
             res = sess.run(
