@@ -300,9 +300,6 @@ def train(model, config, save_path):
             if stop_training:
                 break
 
-            if res['metrics']['ce_loss'] < best_ce_loss:
-                best_ce_loss = res['metrics']['ce_loss']
-
 
 def get_mnist(train_bs, valid_bs, test_bs=10000):
     split_percentage = 80
