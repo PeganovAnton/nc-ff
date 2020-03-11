@@ -203,7 +203,7 @@ def decide_if_training_is_finished(
     if method_of_interruption_of_training == 'fixed_num_steps':
         stop_training = step > config['num_steps']
     elif method_of_interruption_of_training == 'impatience':
-        if step % config['stop_patience_period']:
+        if step % config['stop_patience_period'] == 0:
             if res['metrics']['ce_loss'] < best_ce_loss:
                 stop_impatience = 0
             else:
