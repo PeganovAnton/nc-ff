@@ -174,12 +174,13 @@ def update_lr(lr, step, res, best_ce_loss, lr_impatience, config):
         if step % config['lr_patience_period'] == 0:
             if res['metrics']['ce_loss'] < best_ce_loss:
                 lr_impatience = 0
+                best_ce_loss = res['metrics']['ce_loss']
             else:
                 lr_impatience += 1
                 if lr_impatience > config['lr_patience']:
                     lr *= config['lr_decay']
                     lr_impatience = 0
-    return lr, lr_impatience
+    return lr, lr_impatience, best_ce_loss
 
 
 def get_training_interruption_method(config):
@@ -206,6 +207,7 @@ def decide_if_training_is_finished(
         if step % config['stop_patience_period'] == 0:
             if res['metrics']['ce_loss'] < best_ce_loss:
                 stop_impatience = 0
+                best_ce_loss = res['metrics']['ce_loss']
             else:
                 stop_impatience += 1
         stop_training = stop_impatience > config['stop_patience']
@@ -215,7 +217,7 @@ def decide_if_training_is_finished(
                 method_of_interruption_of_training
             )
         )
-    return stop_training, stop_impatience
+    return stop_training, stop_impatience, best_ce_loss
 
 
 def time_for_logarithmic_logging(step, factor):
@@ -246,7 +248,8 @@ def train(model, config, save_path):
         stop_impatience = 0
         # `lr_impatience` is not used if 'lr_step' is in `config`.
         lr_impatience = 0
-        best_ce_loss = float('+inf')
+        best_stop_ce_loss = float('+inf')
+        best_lr_ce_loss = float('+inf')
 
         while True:
             if time_for_logarithmic_logging(
@@ -288,11 +291,12 @@ def train(model, config, save_path):
             )
             step += 1
 
-            lr, lr_impatience = update_lr(
-                lr, step, res, best_ce_loss, lr_impatience, config)
+            lr, lr_impatience, best_lr_ce_loss = update_lr(
+                lr, step, res, best_lr_ce_loss, lr_impatience, config)
 
-            stop_training, stop_impatience = decide_if_training_is_finished(
-                step, res, best_ce_loss, stop_impatience, config)
+            stop_training, stop_impatience, best_stop_ce_loss = \
+                decide_if_training_is_finished(
+                    step, res, best_stop_ce_loss, stop_impatience, config)
             if stop_training:
                 break
 
