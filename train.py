@@ -215,7 +215,7 @@ def decide_if_training_is_finished(
                 method_of_interruption_of_training
             )
         )
-    return stop_training
+    return stop_training, stop_impatience
 
 
 def time_for_logarithmic_logging(step, factor):
@@ -291,7 +291,7 @@ def train(model, config, save_path):
             lr, lr_impatience = update_lr(
                 lr, step, res, best_ce_loss, lr_impatience, config)
 
-            stop_training = decide_if_training_is_finished(
+            stop_training, stop_impatience = decide_if_training_is_finished(
                 step, res, best_ce_loss, stop_impatience, config)
             if stop_training:
                 break
