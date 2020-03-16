@@ -125,7 +125,14 @@ def save_tensors(tensors, save_path, tensors_and_accumulators_to_save=None):
             pickle.dump(v, f)
 
 
-def test(sess, train_step, model, mode, save_path, tensors_and_accumulators_to_save):
+def test(
+        sess,
+        train_step,
+        model,
+        mode,
+        save_path,
+        tensors_and_accumulators_to_save
+):
     sess.run(model.init_ops[mode])
     metrics = {}
     accumulators = {}
@@ -165,16 +172,16 @@ def get_lr_decay_method(config):
     return method_of_lr_decay
 
 
-def update_lr(lr, step, res, best_ce_loss, lr_impatience, config):
+def update_lr(lr, step, valid_metrics, best_ce_loss, lr_impatience, config):
     method_of_lr_decay = get_lr_decay_method(config)
     if method_of_lr_decay == 'periodic':
         lr = config['lr_init'] \
              * config['lr_decay'] ** (step // config["lr_step"])
     elif method_of_lr_decay == 'impatience':
         if step % config['lr_patience_period'] == 0:
-            if res['metrics']['ce_loss'] < best_ce_loss:
+            if valid_metrics['ce_loss'] < best_ce_loss:
                 lr_impatience = 0
-                best_ce_loss = res['metrics']['ce_loss']
+                best_ce_loss = valid_metrics['ce_loss']
             else:
                 lr_impatience += 1
                 if lr_impatience > config['lr_patience']:
@@ -198,16 +205,16 @@ def get_training_interruption_method(config):
 
 
 def decide_if_training_is_finished(
-        step, res, best_ce_loss, stop_impatience, config):
+        step, valid_metrics, best_ce_loss, stop_impatience, config):
     method_of_interruption_of_training = get_training_interruption_method(
         config)
     if method_of_interruption_of_training == 'fixed_num_steps':
         stop_training = step > config['num_steps']
     elif method_of_interruption_of_training == 'impatience':
         if step % config['stop_patience_period'] == 0:
-            if res['metrics']['ce_loss'] < best_ce_loss:
+            if valid_metrics['ce_loss'] < best_ce_loss:
                 stop_impatience = 0
-                best_ce_loss = res['metrics']['ce_loss']
+                best_ce_loss = valid_metrics['ce_loss']
             else:
                 stop_impatience += 1
         stop_training = stop_impatience > config['stop_patience']
@@ -252,8 +259,7 @@ def train(model, config, save_path):
         best_lr_ce_loss = float('+inf')
 
         while True:
-            if time_for_logarithmic_logging(
-                    step, config['log_factor']):
+            if time_for_logarithmic_logging(step, config['log_factor']):
                 tensors = sess.run(model.fetches['tensors'])
                 if 'eigen' in config:
                     tensors = count_real_eigen_values_fraction(tensors)
@@ -286,17 +292,25 @@ def train(model, config, save_path):
                 )
 
             res = sess.run(
-                model.fetches['train'],
-                feed_dict={model.feed_dict['lr']: lr}
-            )
+                model.fetches['train'], feed_dict={model.feed_dict['lr']: lr})
             step += 1
 
             lr, lr_impatience, best_lr_ce_loss = update_lr(
-                lr, step, res, best_lr_ce_loss, lr_impatience, config)
+                lr,
+                step,
+                valid_metrics,
+                best_lr_ce_loss,
+                lr_impatience,
+                config
+            )
 
             stop_training, stop_impatience, best_stop_ce_loss = \
                 decide_if_training_is_finished(
-                    step, res, best_stop_ce_loss, stop_impatience, config)
+                    step,
+                    valid_metrics,
+                    best_stop_ce_loss,
+                    stop_impatience,
+                    config)
             if stop_training:
                 break
 
