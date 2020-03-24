@@ -70,7 +70,7 @@ def plot_beam(da, config, color, color_coord):
     plt.plot(
         da.coords['values'],
         mean,
-        lw=1,
+        lw=1.5,
         color=color,
         label=config['color_dim'] + ': ' + str(color_coord.data)
     )
@@ -83,17 +83,48 @@ def plot_beam(da, config, color, color_coord):
         )
 
 
+def plot_fill_band(da, config, color, color_coord):
+    mean = da.reduce(np.mean, config['beam_dim'])
+    std = da.reduce(np.std, config['beam_dim'], ddof=1)
+    plt.plot(
+        da.coords['values'],
+        mean,
+        lw=1.5,
+        color=color,
+        label=config['color_dim'] + ': ' + str(color_coord.data)
+    )
+    plt.fill_between(
+        da.coords['values'],
+        mean-std,
+        mean+std,
+        color=color,
+        alpha=0.2
+    )
+
+
 def draw_beams_plot(da, save_file, config, plot_coord):
     fig, ax = plt.subplots()
     for i, color_coord in enumerate(da.coords[config['color_dim']]):
         color = get_color(i)
-        plot_beam(
-            da.sel(
-                **{config['color_dim']: color_coord}),
-            config,
-            color,
-            color_coord
-        )
+        if config['plot_type'] == 'beam':
+            plot_beam(
+                da.sel(
+                    **{config['color_dim']: color_coord}),
+                config,
+                color,
+                color_coord
+            )
+        elif config['plot_type'] == 'fill':
+            plot_fill_band(
+                da.sel(
+                    **{config['color_dim']: color_coord}),
+                config,
+                color,
+                color_coord
+            )
+        else:
+            raise ValueError("Unsupported plot type {}".format(
+                config['plot_type']))
     ax.grid()
     ax.set_xlabel('step')
     ax.set_xscale('log')
