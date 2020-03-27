@@ -9,6 +9,7 @@ import pickle
 import numpy as np
 import tensorflow.compat.v1 as tf
 import tensorflow_datasets as tfds
+from sklearn.model_selection import train_test_split
 
 import nets
 
@@ -359,12 +360,96 @@ def get_mnist(train_bs, valid_bs, test_bs=10000):
     return {'train': train_ds, 'valid': valid_ds, "test": test_ds}, sizes
 
 
+def sample_by_classes(examples, labels, balance, class_starting_indices):
+    class_sizes = [
+        int((end-start)*b) for start, end, b in zip(
+            class_starting_indices,
+            class_starting_indices[1:] + [len(class_starting_indices)],
+            balance
+        )
+    ]
+    new_examples, new_labels = [], []
+    for start, size in zip(class_starting_indices, class_sizes):
+        new_examples.append(examples[start:start+size])
+        new_labels.append(labels[start:start+size])
+    return np.concatenate(new_examples, axis=0), \
+        np.concatenate(new_labels, axis=0)
+
+
+def get_unbalanced_mnist(
+        train_bs,
+        valid_bs,
+        balance=(.1, .1, .1, .1, .1, .1, .1, .1, .1, .1),
+        shuffle_balance=True,
+):
+    valid_frac = 0.2
+    data_dir = os.path.join(get_repo_root('nc-ff'), 'datasets')
+    data_file = os.path.join(data_dir, 'mnist_sorted.npz')
+    with np.load(data_file) as data:
+        train_examples = np.expand_dims(data['x_train'], axis=3)
+        train_labels = data['y_train']
+        test_examples = np.expand_dims(data['x_test'], axis=3)
+        test_labels = data['y_test']
+    balance = np.array(balance)
+    if shuffle_balance:
+        np.random.shuffle(balance)
+    train_examples, train_labels = sample_by_classes(
+        train_examples,
+        train_labels,
+        balance=balance,
+        class_starting_indices=[len(train_labels) // 10 * i for i in range(10)]
+    )
+    train_examples, valid_examples, train_labels, valid_labels = \
+        train_test_split(
+            train_examples,
+            train_labels,
+            test_size=valid_frac,
+            stratify=train_labels
+        )
+    test_examples, test_labels = sample_by_classes(
+        test_examples,
+        test_labels,
+        balance,
+        class_starting_indices=[len(test_labels) // 10 * i for i in range(10)]
+    )
+    sizes = {
+        'train': len(train_labels),
+        'valid': len(valid_labels),
+        'test': len(test_labels)
+    }
+    train_ds = tf.data.Dataset.from_tensor_slices(
+        (train_examples, train_labels))
+    valid_ds = tf.data.Dataset.from_tensor_slices(
+        (valid_examples, valid_labels))
+    valid_ds = valid_ds.batch(valid_bs)
+    test_ds = tf.data.Dataset.from_tensor_slices(
+        (test_examples, test_labels))
+    test_ds = test_ds.batch(sizes['test'])
+    train_ds = train_ds.repeat().shuffle(1024).batch(train_bs)
+    return {'train': train_ds, 'valid': valid_ds, "test": test_ds}, sizes
+
+
+def get_datasets(config):
+    dataset_config = config['train'].get('dataset', {'name': 'mnist'})
+    if dataset_config['name'] == 'mnist':
+        datasets, sizes = get_mnist(
+            config['train']['batch_size'],
+            config['train']['valid']['batch_size'])
+    elif dataset_config['name'] == 'unbalanced_mnist':
+        datasets, sizes = get_unbalanced_mnist(
+            config['train']['batch_size'],
+            config['train']['valid']['batch_size'],
+            balance=config['train']['dataset']['balance'],
+        )
+    else:
+        raise ValueError("Unsupported dataset type.")
+    return datasets, sizes
+
+
 def launch(config):
     ModelClass = getattr(nets, config['graph']['net'])
     model = ModelClass(config['graph'])
-    datasets, sizes = get_mnist(
-        config['train']['batch_size'],
-        config['train']['valid']['batch_size'])
+    datasets, sizes = get_datasets(config)
     model.build(datasets, sizes)
     train(model, config['train'], config['save_path'])
 
