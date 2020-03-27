@@ -387,9 +387,9 @@ def get_unbalanced_mnist(
     data_dir = os.path.join(get_repo_root('nc-ff'), 'datasets')
     data_file = os.path.join(data_dir, 'mnist_sorted.npz')
     with np.load(data_file) as data:
-        train_examples = data['x_train'].reshape((-1, 28, 28, 1))
+        train_examples = data['x_train'].reshape((-1, 28, 28, 1)).astype(np.int64)
         train_labels = data['y_train']
-        test_examples = data['x_test'].reshape((-1, 28, 28, 1))
+        test_examples = data['x_test'].reshape((-1, 28, 28, 1)).astype(np.int64)
         test_labels = data['y_test']
     balance = np.array(balance)
     if shuffle_balance:
@@ -432,6 +432,9 @@ def get_unbalanced_mnist(
 
 def get_datasets(config):
     dataset_config = config['train'].get('dataset', {'name': 'mnist'})
+    datasets, sizes = get_mnist(
+        config['train']['batch_size'],
+        config['train']['valid']['batch_size'])
     if dataset_config['name'] == 'mnist':
         datasets, sizes = get_mnist(
             config['train']['batch_size'],
