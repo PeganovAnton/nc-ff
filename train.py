@@ -432,9 +432,6 @@ def get_unbalanced_mnist(
 
 def get_datasets(config):
     dataset_config = config['train'].get('dataset', {'name': 'mnist'})
-    datasets, sizes = get_mnist(
-        config['train']['batch_size'],
-        config['train']['valid']['batch_size'])
     if dataset_config['name'] == 'mnist':
         datasets, sizes = get_mnist(
             config['train']['batch_size'],
