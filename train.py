@@ -5,6 +5,7 @@ import json
 import multiprocessing as mp
 import os
 import pickle
+from urllib.request import urlretrieve
 
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -386,9 +387,9 @@ def get_unbalanced_mnist(
     data_dir = os.path.join(get_repo_root('nc-ff'), 'datasets')
     data_file = os.path.join(data_dir, 'mnist_sorted.npz')
     with np.load(data_file) as data:
-        train_examples = np.expand_dims(data['x_train'], axis=3)
+        train_examples = data['x_train'].reshape((-1, 28, 28, 1))
         train_labels = data['y_train']
-        test_examples = np.expand_dims(data['x_test'], axis=3)
+        test_examples = data['x_test'].reshape((-1, 28, 28, 1))
         test_labels = data['y_test']
     balance = np.array(balance)
     if shuffle_balance:
