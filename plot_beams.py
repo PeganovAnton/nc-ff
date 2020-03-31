@@ -68,7 +68,7 @@ def get_color(idx):
 def plot_beam(da, config, color, color_coord):
     mean = da.reduce(np.mean, config['beam_dim'])
     plt.plot(
-        da.coords['values'],
+        da.coords['step'],
         mean,
         lw=1.5,
         color=color,
@@ -76,7 +76,7 @@ def plot_beam(da, config, color, color_coord):
     )
     for beam_coord in da.coords[config['beam_dim']]:
         plt.plot(
-            da.coords['values'],
+            da.coords['step'],
             da.sel(**{config['beam_dim']: beam_coord}),
             lw=0.3,
             color=color,
@@ -87,14 +87,14 @@ def plot_fill_band(da, config, color, color_coord):
     mean = da.reduce(np.mean, config['beam_dim'])
     std = da.reduce(np.std, config['beam_dim'], ddof=1)
     plt.plot(
-        da.coords['values'],
+        da.coords['step'],
         mean,
         lw=1.5,
         color=color,
         label=config['color_dim'] + ': ' + str(color_coord.data)
     )
     plt.fill_between(
-        da.coords['values'],
+        da.coords['step'],
         mean-std,
         mean+std,
         color=color,
