@@ -1,0 +1,20 @@
+{
+  "ylabels": {
+    "acc": "accuracy",
+    "ce_loss": "cross entropy loss",
+    "loss": "ce loss + l2 loss",
+    "hs0_corr": "mean square correlation",
+    "hs3_corr": "mean square correlation",
+    "hs6_corr": "mean square correlation",
+    "hs9_corr": "mean square correlation",
+    "hs0_rms": "mean square hidden state element",
+    "hs3_rms": "mean square hidden state element",
+    "hs6_rms": "mean square hidden state element",
+    "hs9_rms": "mean square hidden state element"
+  },
+  "save_dir": "l5_bn_l2_lr0.01_sgd/step_metric_plots",
+  "plot_dim": "metric",
+  "color_dim": "lambda",
+  "beam_dim": "launch_number",
+  "plot_type": "fill"
+}
