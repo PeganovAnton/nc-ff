@@ -1,0 +1,33 @@
+{
+  "axis_labels": {
+    "acc": "accuracy",
+    "ce_loss": "cross entropy loss",
+    "loss": "ce loss + l2 loss",
+    "hs0_corr": "mean square correlation",
+    "hs2_corr": "mean square correlation",
+    "hs4_corr": "mean square correlation",
+    "hs6_corr": "mean square correlation",
+    "hs0_rms": "mean square hidden state element",
+    "hs2_rms": "mean square hidden state element",
+    "hs4_rms": "mean square hidden state element",
+    "hs6_rms": "mean square hidden state element"
+  },
+  "save_dir": "l5_l2_adam/loss_corr_plots",
+  "plot_dim": "metric",
+  "color_dim": "learning_rate",
+  "averaging_dim": "launch_number",
+  "plot_type": "bar",
+  "metric_dim": "metric",
+  "x_metric": "ce_loss",
+  "y_metrics": [
+    "hs0_corr",
+    "hs2_corr",
+    "hs4_corr",
+    "hs6_corr",
+    "hs0_rms",
+    "hs2_rms",
+    "hs4_rms",
+    "hs6_rms"
+  ],
+  "xscale": "log"
+}
