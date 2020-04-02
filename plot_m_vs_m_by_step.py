@@ -92,6 +92,25 @@ def plot_average_bar(da, config, color, color_coord, y_metric):
     )
 
 
+def plot_beam(da, config, color, color_coord, y_metric):
+    mean = da.reduce(np.mean, config['averaging_dim'])
+    plt.errorbar(
+        mean.sel(**{config['metric_dim']: config['x_metric']}),
+        mean.sel(**{config['metric_dim']: y_metric}),
+        lw=1.5,
+        color=color,
+        label=config['color_dim'] + ': ' + str(color_coord)
+    )
+    for beam_coord in da.coords[config['averaging_dim']]:
+        ray_da = da.sel(**{config['averaging_dim']: beam_coord})
+        plt.plot(
+            ray_da.sel(**{config['metric_dim']: config['x_metric']}),
+            ray_da.sel(**{config['metric_dim']: y_metric}),
+            lw=0.3,
+            color=color
+        )
+
+
 def draw_m_vs_m_plot(da, save_file, config, y_metric):
     fig, ax = plt.subplots()
     if 'color_values' not in config or config['color_values'] is None:
@@ -103,8 +122,15 @@ def draw_m_vs_m_plot(da, save_file, config, y_metric):
         color = get_color(i)
         if config['plot_type'] == 'bar':
             plot_average_bar(
-                da.sel(
-                    **{config['color_dim']: color_coord}),
+                da.sel(**{config['color_dim']: color_coord}),
+                config,
+                color,
+                color_coord,
+                y_metric
+            )
+        elif config['plot_type'] == 'beam':
+            plot_beam(
+                da.sel(**{config['color_dim']: color_coord}),
                 config,
                 color,
                 color_coord,

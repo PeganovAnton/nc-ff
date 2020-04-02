@@ -362,11 +362,12 @@ def get_mnist(train_bs, valid_bs, test_bs=10000):
 
 
 def sample_by_classes(examples, labels, balance, class_starting_indices):
+    class_fractions = balance / np.max(balance)
     class_sizes = [
-        int((end-start)*b) for start, end, b in zip(
+        int((end-start)*b) for start, end, c in zip(
             class_starting_indices,
             class_starting_indices[1:] + [len(class_starting_indices)],
-            balance
+            class_fractions
         )
     ]
     new_examples, new_labels = [], []
