@@ -438,6 +438,7 @@ def get_datasets(config):
             config['train']['batch_size'],
             config['train']['valid']['batch_size'])
     elif dataset_config['name'] == 'unbalanced_mnist':
+        print('Unbalanced dataset')
         datasets, sizes = get_unbalanced_mnist(
             config['train']['batch_size'],
             config['train']['valid']['batch_size'],
