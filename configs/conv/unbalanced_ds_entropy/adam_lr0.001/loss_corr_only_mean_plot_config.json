@@ -12,15 +12,13 @@
     "hs6_rms": "mean square hidden state element",
     "hs9_rms": "mean square hidden state element"
   },
-  "save_dir": "unbalanced_ds_entropy/adam_lr0.001/loss_corr_plots",
+  "save_dir": "unbalanced_ds_entropy/adam_lr0.001/loss_corr_only_mean_plots",
   "plot_dim": "metric",
   "color_dim": "entropy",
   "averaging_dim": "launch_number",
-  "plot_type": "beam",
+  "plot_type": "only_mean",
   "metric_dim": "metric",
   "x_metric": "ce_loss",
-  "xlim": [0.9, 2.4],
-  "ylim": [0.1, 0.3],
   "y_metrics": [
     "hs0_corr",
     "hs3_corr",

@@ -94,7 +94,7 @@ def plot_average_bar(da, config, color, color_coord, y_metric):
 
 def plot_beam(da, config, color, color_coord, y_metric):
     mean = da.reduce(np.mean, config['averaging_dim'])
-    plt.errorbar(
+    plt.plot(
         mean.sel(**{config['metric_dim']: config['x_metric']}),
         mean.sel(**{config['metric_dim']: y_metric}),
         lw=1.5,
@@ -109,6 +109,17 @@ def plot_beam(da, config, color, color_coord, y_metric):
             lw=0.3,
             color=color
         )
+
+
+def plot_only_mean(da, config, color, color_coord, y_metric):
+    mean = da.reduce(np.mean, config['averaging_dim'])
+    plt.plot(
+        mean.sel(**{config['metric_dim']: config['x_metric']}),
+        mean.sel(**{config['metric_dim']: y_metric}),
+        lw=1.5,
+        color=color,
+        label=config['color_dim'] + ': ' + str(color_coord)
+    )
 
 
 def draw_m_vs_m_plot(da, save_file, config, y_metric):
@@ -136,6 +147,14 @@ def draw_m_vs_m_plot(da, save_file, config, y_metric):
                 color_coord,
                 y_metric
             )
+        elif config['plot_type'] == 'only_mean':
+            plot_only_mean(
+                da.sel(**{config['color_dim']: color_coord}),
+                config,
+                color,
+                color_coord,
+                y_metric
+            )
         else:
             raise ValueError("Unsupported plot type {}".format(
                 config['plot_type']))
@@ -143,6 +162,10 @@ def draw_m_vs_m_plot(da, save_file, config, y_metric):
     ax.set_xlabel(config["axis_labels"][config['x_metric']])
     ax.set_ylabel(config['axis_labels'][y_metric])
     ax.set_xscale(config['xscale'])
+    if 'xlim' in config:
+        ax.set_xlim(*config['xlim'])
+    if 'ylim' in config:
+        ax.set_ylim(*config['ylim'])
     ax.legend()
     plt.tight_layout()
     dir_, file = os.path.split(save_file)
