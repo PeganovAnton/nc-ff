@@ -53,6 +53,7 @@
       },
       {
         "type": "dense",
+        "use_bias": false,
         "units": 10
       }
     ],
