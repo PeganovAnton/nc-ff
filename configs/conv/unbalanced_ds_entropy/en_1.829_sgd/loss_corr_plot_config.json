@@ -29,5 +29,5 @@
     "hs6_rms",
     "hs9_rms"
   ],
-  "xscale": "log"
+  "xscale": "linear"
 }
