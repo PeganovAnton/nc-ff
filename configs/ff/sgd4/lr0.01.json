@@ -1,0 +1,23 @@
+{
+  "num_repeats": 10,
+  "graph": {
+    "net": "DenseNetwork",
+    "num_nodes": [1500, 1000, 500, 10],
+    "optimizer": "sgd",
+    "init_parameter": 0.1,
+    "shuffle": false
+  },
+  "train": {
+    "batch_size": 50,
+    "stop_patience_period": 5000,
+    "stop_patience": 20,
+    "lr_init": 0.01,
+    "lr_decay": 0.5,
+    "lr_patience_period": 5000,
+    "lr_patience": 10,
+    "log_factor": 1.05,
+    "valid": {
+      "batch_size": 100
+    }
+  }
+}

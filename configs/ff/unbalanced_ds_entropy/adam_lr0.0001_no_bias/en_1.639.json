@@ -1,0 +1,103 @@
+{
+  "num_repeats": 10,
+  "graph": {
+    "net": "Conv2dNetwork",
+    "layers": [
+      {
+        "type": "conv_2d",
+        "filters": 64,
+        "kernel_size": [5, 5],
+        "strides": [1, 1],
+        "activation": "leaky_relu",
+        "kernel_initializer": "truncated_normal",
+        "padding": "valid"
+      },
+      {
+        "type": "max_pooling_2d",
+        "pool_size": [2, 2],
+        "strides": [2, 2],
+        "padding": "same"
+      },
+      {"type": "batch_norm"},
+      {
+        "type": "conv_2d",
+        "filters": 128,
+        "kernel_size": [5, 5],
+        "strides": [1, 1],
+        "activation": "leaky_relu",
+        "kernel_initializer": "truncated_normal",
+        "padding": "same"
+      },
+      {
+        "type": "max_pooling_2d",
+        "pool_size": [2, 2],
+        "strides": [2, 2],
+        "padding": "same"
+      },
+      {"type": "batch_norm"},
+      {
+        "type": "conv_2d",
+        "filters": 256,
+        "kernel_size": [3, 3],
+        "strides": [1, 1],
+        "activation": "leaky_relu",
+        "kernel_initializer": "truncated_normal",
+        "padding": "same"
+      },
+      {"type": "flatten"},
+      {"type": "batch_norm"},
+      {
+        "type": "dense",
+        "units": 500,
+        "activation": "leaky_relu"
+      },
+      {
+        "type": "dense",
+        "use_bias": false,
+        "units": 10
+      }
+    ],
+    "optimizer": "adam",
+    "init_parameter": 1,
+    "l2_reg_coef": 0.03,
+    "shuffle": false
+  },
+  "train": {
+    "dataset": {
+      "name": "unbalanced_mnist",
+      "balance": [
+        0.003944,
+        0.006597,
+        0.01104,
+        0.01846,
+        0.03088,
+        0.05166,
+        0.08642,
+        0.1446,
+        0.2418,
+        0.4046
+      ]
+    },
+    "batch_size": 50,
+    "stop_patience_period": 5000,
+    "stop_patience": 20,
+    "lr_init": 0.0001,
+    "lr_decay": 0.5,
+    "lr_patience_period": 5000,
+    "lr_patience": 10,
+    "log_factor": 1.05,
+    "valid": {
+      "batch_size": 100
+    },
+    "tensors_and_accumulators_to_save": [
+      "hs0_corr",
+      "hs0_rms",
+      "hs3_corr",
+      "hs3_rms",
+      "hs6_corr",
+      "hs6_rms",
+      "hs9_corr",
+      "hs9_rms"
+    ]
+  }
+}
