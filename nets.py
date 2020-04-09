@@ -50,7 +50,7 @@ class Network:
         self._config = copy.deepcopy(config)
         self._opt_type = self._config['optimizer']
         self._init_parameter = config['init_parameter']
-        self.l2_reg_coef = config['l2_reg_coef']
+        self.l2_reg_coef = config.get('l2_reg_coef', 0)
         self.init_ops = None
         self.fetches = {'accumulators': {}, 'tensors': {}, 'metrics': {}}
         self.datasets = None
