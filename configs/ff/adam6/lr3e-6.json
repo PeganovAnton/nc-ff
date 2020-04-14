@@ -18,6 +18,20 @@
     "log_factor": 1.05,
     "valid": {
       "batch_size": 100
-    }
+    },
+    "tensors_and_accumulators_to_save": [
+      "hs0_corr",
+      "hs0_rms",
+      "hs1_corr",
+      "hs1_rms",
+      "hs2_corr",
+      "hs2_rms",
+      "hs3_corr",
+      "hs3_rms",
+      "hs4_corr",
+      "hs4_rms",
+      "hs5_corr",
+      "hs5_rms"
+    ]
   }
 }

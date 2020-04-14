@@ -41,3 +41,9 @@ python3 ../../results_to_data_array.py \
     unbalanced_ds_entropy/adam_lr0.0001_no_bias \
     "^\./en_([0-9\.]*)/([0-9])/\w*/(?:(?:valid/(\w*).*)|(?:(\w*).pickle))$" \
     -t float int str -d entropy launch_number metric step
+
+# fully connected 4 layers
+cd ~/nc-ff/results/ff
+python3 ../../results_to_data_array.py adam4/ \
+    "^\./lr([0-9\.-]*)/([0-9])/\w*/(?:(?:valid/(\w*).*)|(?:(\w*).pickle))$" \
+    -t float int str -d learning_rate launch_number metric step
