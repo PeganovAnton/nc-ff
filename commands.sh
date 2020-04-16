@@ -45,5 +45,5 @@ python3 ../../results_to_data_array.py \
 # fully connected 4 layers
 cd ~/nc-ff/results/ff
 python3 ../../results_to_data_array.py adam4/ \
-    "^\./lr([0-9\.-]*)/([0-9])/\w*/(?:(?:valid/(\w*).*)|(?:(\w*).pickle))$" \
+    "^\./lr([0-9\.\-e+]*)/([0-9])/\w*/(?:(?:valid/(\w*).*)|(?:(\w*).pickle))$" \
     -t float int str -d learning_rate launch_number metric step
