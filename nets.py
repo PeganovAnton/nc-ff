@@ -179,7 +179,7 @@ class DenseNetwork(Network):
                 punish='correlation',
                 reduction='mean',
                 norm='sqr'
-            )
+            ) ** 0.5
             tensor_name = 'hs{}_rms'.format(i)
             self.fetches['accumulators'][tensor_name] = tf.sqrt(
                 tf.reduce_mean(tf.square(hs)))

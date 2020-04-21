@@ -7,10 +7,14 @@
     "hs1_corr": "mean square correlation",
     "hs2_corr": "mean square correlation",
     "hs3_corr": "mean square correlation",
+    "hs4_corr": "mean square correlation",
+    "hs5_corr": "mean square correlation",
     "hs0_rms": "mean square hidden state element",
     "hs1_rms": "mean square hidden state element",
     "hs2_rms": "mean square hidden state element",
-    "hs3_rms": "mean square hidden state element"
+    "hs3_rms": "mean square hidden state element",
+    "hs4_rms": "mean square hidden state element",
+    "hs5_rms": "mean square hidden state element"
   },
   "save_dir": "adam6/loss_corr_plots",
   "plot_dim": "metric",
@@ -24,10 +28,14 @@
     "hs1_corr",
     "hs2_corr",
     "hs3_corr",
+    "hs4_corr",
+    "hs5_corr",
     "hs0_rms",
     "hs1_rms",
     "hs2_rms",
-    "hs3_rms"
+    "hs3_rms",
+    "hs4_rms",
+    "hs5_rms"
   ],
   "xscale": "log"
 }

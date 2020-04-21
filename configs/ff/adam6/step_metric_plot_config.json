@@ -7,12 +7,16 @@
     "hs1_corr": "mean square correlation",
     "hs2_corr": "mean square correlation",
     "hs3_corr": "mean square correlation",
+    "hs4_corr": "mean square correlation",
+    "hs5_corr": "mean square correlation",
     "hs0_rms": "mean square hidden state element",
     "hs1_rms": "mean square hidden state element",
     "hs2_rms": "mean square hidden state element",
-    "hs3_rms": "mean square hidden state element"
+    "hs3_rms": "mean square hidden state element",
+    "hs4_rms": "mean square hidden state element",
+    "hs5_rms": "mean square hidden state element"
   },
-  "save_dir": "l5_bn_l2_adam/step_metric_plots",
+  "save_dir": "adam6/step_metric_plots",
   "plot_dim": "metric",
   "color_dim": "learning_rate",
   "beam_dim": "launch_number",
