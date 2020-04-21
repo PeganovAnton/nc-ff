@@ -1,0 +1,49 @@
+{
+  "num_repeats": 10,
+  "graph": {
+    "net": "DenseNetwork",
+    "num_nodes": [1500, 1000, 500, 10],
+    "optimizer": "adam",
+    "init_parameter": 1,
+    "l2_reg_coef": 0.03,
+    "shuffle": false
+  },
+  "train": {
+    "dataset": {
+      "name": "unbalanced_mnist",
+      "balance": [
+        0.0135,
+        0.01906,
+        0.02692,
+        0.03801,
+        0.05368,
+        0.0758,
+        0.107,
+        0.1511,
+        0.2134,
+        0.3014
+      ]
+    },
+    "batch_size": 50,
+    "stop_patience_period": 2000,
+    "stop_patience": 20,
+    "lr_init": 0.0001,
+    "lr_decay": 0.5,
+    "lr_patience_period": 2000,
+    "lr_patience": 10,
+    "log_factor": 1.05,
+    "valid": {
+      "batch_size": 100
+    },
+    "tensors_and_accumulators_to_save": [
+      "hs0_corr",
+      "hs0_rms",
+      "hs1_corr",
+      "hs1_rms",
+      "hs2_corr",
+      "hs2_rms",
+      "hs3_corr",
+      "hs3_rms"
+    ]
+  }
+}
