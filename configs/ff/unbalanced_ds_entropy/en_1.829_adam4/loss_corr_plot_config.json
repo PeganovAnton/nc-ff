@@ -1,0 +1,33 @@
+{
+  "axis_labels": {
+    "acc": "accuracy",
+    "ce_loss": "cross entropy loss",
+    "loss": "ce loss + l2 loss",
+    "hs0_corr": "mean square correlation",
+    "hs1_corr": "mean square correlation",
+    "hs2_corr": "mean square correlation",
+    "hs3_corr": "mean square correlation",
+    "hs0_rms": "mean square hidden state element",
+    "hs1_rms": "mean square hidden state element",
+    "hs2_rms": "mean square hidden state element",
+    "hs3_rms": "mean square hidden state element"
+  },
+  "save_dir": "unbalanced_ds_entropy/en_1.829_adam4/loss_corr_plots",
+  "plot_dim": "metric",
+  "color_dim": "learning_rate",
+  "averaging_dim": "launch_number",
+  "plot_type": "beam",
+  "metric_dim": "metric",
+  "x_metric": "ce_loss",
+  "y_metrics": [
+    "hs0_corr",
+    "hs1_corr",
+    "hs2_corr",
+    "hs3_corr",
+    "hs0_rms",
+    "hs1_rms",
+    "hs2_rms",
+    "hs3_rms"
+  ],
+  "xscale": "linear"
+}
