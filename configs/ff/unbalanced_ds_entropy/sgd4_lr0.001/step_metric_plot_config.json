@@ -12,7 +12,7 @@
     "hs2_rms": "mean square hidden state element",
     "hs3_rms": "mean square hidden state element"
   },
-  "save_dir": "unbalanced_ds_entropy/sgd4_lr0.01/step_metric_plots",
+  "save_dir": "unbalanced_ds_entropy/sgd4_lr0.001/step_metric_plots",
   "plot_dim": "metric",
   "color_dim": "entropy",
   "beam_dim": "launch_number",
